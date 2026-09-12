@@ -3,16 +3,52 @@ import { TypewriterCanvas } from './three/TypewriterCanvas';
 import { typewriterAudio } from './audio/typewriterAudio';
 import { TypewriterModelController } from './three/typewriterModel';
 import { ALL_KEYS } from './data/keyboardLayout';
+import { PAPER_MAX_COLS, PAPER_MAX_LINES } from './three/paperManager';
+
+function pushPaperLine(lines: string[], content: string, maxLines: number) {
+  const next = [...lines, content];
+  if (next.length > maxLines) {
+    return next.slice(next.length - maxLines);
+  }
+  return next;
+}
+
+function appendWithWordWrap(
+  lines: string[],
+  char: string,
+  maxCols: number,
+  maxLines: number
+): { lines: string[]; col: number; didWrap: boolean } {
+  const next = [...lines];
+  const index = next.length - 1;
+  const line = next[index];
+  const isSpace = char === ' ';
+
+  if (line.length < maxCols) {
+    next[index] = line + char;
+    return { lines: next, col: next[index].length, didWrap: false };
+  }
+
+  if (isSpace) {
+    return { lines: pushPaperLine(next, '', maxLines), col: 0, didWrap: true };
+  }
+
+  const breakAt = line.lastIndexOf(' ');
+  if (breakAt > 0) {
+    const word = line.slice(breakAt + 1);
+    next[index] = line.slice(0, breakAt);
+    const wrapped = word + char;
+    return { lines: pushPaperLine(next, wrapped, maxLines), col: wrapped.length, didWrap: true };
+  }
+
+  return { lines: pushPaperLine(next, char, maxLines), col: 1, didWrap: true };
+}
 
 export default function App() {
-  // Initial typed text on the paper sheet
-  const [lines, setLines] = useState<string[]>([
-    'programming languages',
-    'Special',
-  ]);
-  const [currentCol, setCurrentCol] = useState<number>(7);
-  const maxCols = 36;
-  const maxLines = 14;
+  const [lines, setLines] = useState<string[]>(['']);
+  const [currentCol, setCurrentCol] = useState<number>(0);
+  const maxCols = PAPER_MAX_COLS;
+  const maxLines = PAPER_MAX_LINES;
 
   const [hasInteracted, setHasInteracted] = useState<boolean>(false);
   const [hintVisible, setHintVisible] = useState<boolean>(true);
@@ -62,13 +98,13 @@ export default function App() {
         }
 
         setLines((prev) => {
-          const next = [...prev];
-          const currIdx = next.length - 1;
-          if (next[currIdx].length < maxCols) {
-            next[currIdx] += ' ';
-            setCurrentCol(next[currIdx].length);
+          const result = appendWithWordWrap(prev, ' ', maxCols, maxLines);
+          if (result.didWrap) {
+            typewriterAudio.playCarriageReturn();
+            if (model) model.triggerReturnLever();
           }
-          return next;
+          setCurrentCol(result.col);
+          return result.lines;
         });
         return;
       }
@@ -122,25 +158,18 @@ export default function App() {
         }
 
         setLines((prev) => {
-          const next = [...prev];
-          const currIdx = next.length - 1;
-
-          // Margin warning bell at 4 characters before edge
-          if (next[currIdx].length === maxCols - 4) {
+          const currentLine = prev[prev.length - 1];
+          if (currentLine.length === maxCols - 4) {
             typewriterAudio.playBell();
           }
 
-          if (next[currIdx].length < maxCols) {
-            next[currIdx] += char;
-            setCurrentCol(next[currIdx].length);
-          } else {
-            // Auto wrap if line full
+          const result = appendWithWordWrap(prev, char, maxCols, maxLines);
+          if (result.didWrap) {
             typewriterAudio.playCarriageReturn();
             if (model) model.triggerReturnLever();
-            setCurrentCol(1);
-            return [...next, char];
           }
-          return next;
+          setCurrentCol(result.col);
+          return result.lines;
         });
       }
     },
