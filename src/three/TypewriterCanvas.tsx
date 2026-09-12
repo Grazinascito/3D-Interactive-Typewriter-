@@ -9,7 +9,6 @@ interface TypewriterCanvasProps {
   currentCol: number;
   maxCols: number;
   soundEnabled: boolean;
-  badgeText: string;
   onKeyClick: (char: string, code: string, keyId: string) => void;
   onReturnLeverClick: () => void;
   onInteraction?: () => void;
@@ -20,7 +19,6 @@ export const TypewriterCanvas: React.FC<TypewriterCanvasProps> = ({
   lines,
   currentCol,
   maxCols,
-  badgeText,
   onKeyClick,
   onReturnLeverClick,
   onInteraction,
@@ -30,12 +28,6 @@ export const TypewriterCanvas: React.FC<TypewriterCanvasProps> = ({
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
-
-  useEffect(() => {
-    if (controllerRef.current) {
-      controllerRef.current.updateBadgeText(badgeText);
-    }
-  }, [badgeText, controllerRef]);
 
   useEffect(() => {
     if (controllerRef.current) {

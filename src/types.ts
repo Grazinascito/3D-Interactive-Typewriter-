@@ -21,7 +21,6 @@ export interface TypewriterState {
   maxLines: number;
   isCarriageMoving: boolean;
   soundEnabled: boolean;
-  badgeText: string;
   activeKeyId: string | null;
   typebarStriking: boolean;
   cameraPreset: CameraViewPreset;

@@ -13,7 +13,6 @@ import * as THREE from 'three';
  *     * Rear platen deck & tail: gently slopes down to ~0.50.
  * - Deeply recessed keyboard cavity (|x| <= 1.18, z from 1.44 to 0.04) with smooth beveled inner walls.
  * - Central mechanical aperture with smoothly beveled basket walls.
- * - Recessed brushed aluminum badge slot.
  * - Watertight, clean vertical side and front/back skirts with dedicated duplicate vertices
  *   for crisp, razor-sharp edge normals.
  */
@@ -79,8 +78,30 @@ export function createLettera32BodyGeometry(): THREE.BufferGeometry {
     return 0;
   }
 
-  const numStepsZ = 80;
-  const numStepsU = 64;
+  const numStepsZ = 96;
+  const numStepsU = 72;
+
+  // Typebasket window (matches the Procreate finish study):
+  // a narrower well for the typebar fan, then a wider ribbon/spool slot.
+  const WELL_FLOOR_Y = 0.24;
+  function roundedRectSDF(
+    px: number,
+    pz: number,
+    cx: number,
+    cz: number,
+    halfW: number,
+    halfD: number,
+    r: number
+  ): number {
+    const dx = Math.abs(px - cx) - (halfW - r);
+    const dz = Math.abs(pz - cz) - (halfD - r);
+    return Math.hypot(Math.max(dx, 0), Math.max(dz, 0)) + Math.min(Math.max(dx, dz), 0) - r;
+  }
+  function apertureSDF(x: number, z: number): number {
+    const typebarWell = roundedRectSDF(x, z, 0, -0.54, 0.46, 0.22, 0.06);
+    const ribbonSlot = roundedRectSDF(x, z, 0, -0.94, 0.64, 0.20, 0.055);
+    return Math.min(typebarWell, ribbonSlot);
+  }
 
   const positions: number[] = [];
   const uvs: number[] = [];
@@ -136,32 +157,13 @@ export function createLettera32BodyGeometry(): THREE.BufferGeometry {
         }
       }
 
-      // 2. Brushed Aluminum Badge Slot
-      if (z <= -0.07 && z >= -0.21 && Math.abs(x) <= 0.94) {
-        const borderDist = Math.min(
-          Math.abs(z - (-0.07)),
-          Math.abs(z - (-0.21)),
-          0.94 - Math.abs(x)
-        );
-        if (borderDist > 0.02) {
-          y -= 0.022;
-        }
-      }
-
-      // 3. Mechanical Aperture (Opening for typebar basket)
-      let isCutout = false;
-      if (z <= -0.32 && z >= -1.22) {
-        const progressZ = (-0.32 - z) / 0.90;
-        const openHalfWidth = 0.40 + 0.46 * Math.sin(progressZ * Math.PI * 0.72);
-        if (Math.abs(x) < openHalfWidth) {
-          isCutout = true;
-        }
-      }
+      // 2. Mechanical aperture — tight stepped window with a molded inner well
+      const isCutout = apertureSDF(x, z) < 0;
 
       const vIndex = positions.length / 3;
       topGrid[j][i] = isCutout ? -1 : vIndex;
 
-      positions.push(x, y, z);
+      positions.push(x, isCutout ? WELL_FLOOR_Y : y, z);
       uvs.push(fracU, fracZ);
     }
   }
@@ -177,6 +179,43 @@ export function createLettera32BodyGeometry(): THREE.BufferGeometry {
       if (v0 !== -1 && v1 !== -1 && v2 !== -1 && v3 !== -1) {
         indices.push(v0, v1, v2);
         indices.push(v0, v2, v3);
+      }
+    }
+  }
+
+  // Inner skirts: extrude the aperture rim down so the window reads as molded enamel, not a raw hole
+  const downVert = new Map<number, number>();
+  const getWellVert = (topIdx: number): number => {
+    const existing = downVert.get(topIdx);
+    if (existing !== undefined) return existing;
+    const wx = positions[topIdx * 3];
+    const wz = positions[topIdx * 3 + 2];
+    const newIdx = positions.length / 3;
+    positions.push(wx, WELL_FLOOR_Y, wz);
+    uvs.push(0.5, 0.5);
+    downVert.set(topIdx, newIdx);
+    return newIdx;
+  };
+
+  for (let j = 0; j < numStepsZ; j++) {
+    for (let i = 0; i < numStepsU; i++) {
+      const ids = [
+        topGrid[j][i],
+        topGrid[j][i + 1],
+        topGrid[j + 1][i + 1],
+        topGrid[j + 1][i],
+      ];
+      const solidCount = ids.reduce((n, id) => n + (id !== -1 ? 1 : 0), 0);
+      if (solidCount === 0 || solidCount === 4) continue;
+
+      for (let e = 0; e < 4; e++) {
+        const a = ids[e];
+        const b = ids[(e + 1) % 4];
+        if (a === -1 || b === -1) continue;
+        const aBot = getWellVert(a);
+        const bBot = getWellVert(b);
+        indices.push(a, aBot, bBot);
+        indices.push(a, bBot, b);
       }
     }
   }

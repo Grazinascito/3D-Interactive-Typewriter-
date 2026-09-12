@@ -22,8 +22,6 @@ interface TypewriterUIProps {
   onToggleSound: () => void;
   cameraPreset: CameraViewPreset;
   onSelectCameraPreset: (preset: CameraViewPreset) => void;
-  badgeText: string;
-  onChangeBadgeText: (text: string) => void;
   onCarriageReturn: () => void;
   onSpace: () => void;
   onClearPaper: () => void;
@@ -38,8 +36,6 @@ export const TypewriterUI: React.FC<TypewriterUIProps> = ({
   onToggleSound,
   cameraPreset,
   onSelectCameraPreset,
-  badgeText,
-  onChangeBadgeText,
   onCarriageReturn,
   onSpace,
   onClearPaper,
@@ -66,7 +62,7 @@ export const TypewriterUI: React.FC<TypewriterUIProps> = ({
 
   return (
     <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-4 md:p-6 select-none">
-      {/* Top Bar: Title, Badge Switcher & Utilities */}
+      {/* Top Bar: Title & Utilities */}
       <header id="app-header" className="pointer-events-auto flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 bg-neutral-900/80 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-neutral-700/50 shadow-lg text-neutral-100">
           <div className="w-3.5 h-3.5 rounded-full bg-[#2a685e] border border-teal-300/40 shadow-sm" />
@@ -100,7 +96,7 @@ export const TypewriterUI: React.FC<TypewriterUIProps> = ({
             <span className="text-xs font-mono hidden sm:inline">{soundEnabled ? 'AUDIO ON' : 'MUTED'}</span>
           </button>
 
-          {/* Quick Settings (Badge Plate & Options) */}
+          {/* Quick Settings */}
           <button
             id="btn-toggle-settings"
             onClick={() => setShowSettings(!showSettings)}
@@ -132,7 +128,7 @@ export const TypewriterUI: React.FC<TypewriterUIProps> = ({
         >
           <div className="flex items-center justify-between pb-2 border-b border-neutral-800">
             <span className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
-              Badge Plate Inscription
+              Options
             </span>
             <button
               onClick={() => setShowSettings(false)}
@@ -143,31 +139,6 @@ export const TypewriterUI: React.FC<TypewriterUIProps> = ({
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs text-neutral-400">Embossed Brushed Aluminum Plate:</label>
-            <input
-              type="text"
-              value={badgeText}
-              maxLength={28}
-              onChange={(e) => onChangeBadgeText(e.target.value)}
-              className="w-full bg-neutral-950 border border-neutral-700 rounded-lg px-3 py-1.5 text-xs font-mono text-teal-300 focus:outline-none focus:border-teal-500"
-            />
-            <div className="flex gap-2 pt-1">
-              <button
-                onClick={() => onChangeBadgeText('STUDIO -- VIBE CODING 1.0')}
-                className="text-[10px] font-mono px-2 py-1 bg-neutral-800 hover:bg-neutral-700 rounded text-neutral-300 border border-neutral-700"
-              >
-                Photo Badge
-              </button>
-              <button
-                onClick={() => onChangeBadgeText('OLIVETTI -- LETTERA 32')}
-                className="text-[10px] font-mono px-2 py-1 bg-neutral-800 hover:bg-neutral-700 rounded text-neutral-300 border border-neutral-700"
-              >
-                Classic 1963
-              </button>
-            </div>
-          </div>
-
-          <div className="pt-2 border-t border-neutral-800 space-y-2">
             <span className="text-xs text-neutral-400">Quick Actions:</span>
             <div className="grid grid-cols-2 gap-2">
               <button

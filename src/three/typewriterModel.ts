@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { createLettera32BodyGeometry, createChassisBaseMesh } from './geometries';
 import { createTypewriterMaterials } from './materials';
 import { KEYBOARD_ROWS, ALL_KEYS } from '../data/keyboardLayout';
-import { createKeycapTexture, createBadgeTexture } from './keycapFactory';
+import { createKeycapTexture } from './keycapFactory';
 import { createPaperAssembly, PaperController } from './paperManager';
 import { KeyConfig } from '../types';
 
@@ -25,7 +25,6 @@ export interface TypewriterModelController {
   triggerTypebarStrike: () => void;
   setCarriagePosition: (col: number, maxCols: number, isAnimated?: boolean) => void;
   triggerReturnLever: () => void;
-  updateBadgeText: (text: string) => void;
   update: (delta: number) => void;
 }
 
@@ -54,23 +53,7 @@ export function createTypewriterModel(): TypewriterModelController {
   bedMesh.receiveShadow = true;
   rootGroup.add(bedMesh);
 
-  // 4. BRUSHED ALUMINUM BADGE PLATE
-  // Recessed slot above keyboard: z ~ -0.15, y ~ 0.52
-  const badgeGeom = new THREE.PlaneGeometry(1.76, 0.12);
-  let currentBadgeText = 'STUDIO -- VIBE CODING 1.0';
-  let badgeTexture = createBadgeTexture(currentBadgeText);
-  const badgeMaterial = new THREE.MeshStandardMaterial({
-    map: badgeTexture,
-    metalness: 0.82,
-    roughness: 0.32,
-  });
-  const badgeMesh = new THREE.Mesh(badgeGeom, badgeMaterial);
-  badgeMesh.position.set(0, 0.52, -0.15);
-  badgeMesh.rotation.x = -0.32; // angled cleanly with the upper deck slope
-  badgeMesh.receiveShadow = true;
-  rootGroup.add(badgeMesh);
-
-  // 5. MECHANICAL APERTURE INTERNALS (Type Basket)
+  // 4. MECHANICAL APERTURE INTERNALS (Type Basket)
   const mechanicsGroup = new THREE.Group();
   mechanicsGroup.position.set(0, 0.52, -0.74);
 
@@ -125,6 +108,15 @@ export function createTypewriterModel(): TypewriterModelController {
   const spoolR = new THREE.Mesh(spoolGeom, materials.steelMechanics);
   spoolR.position.set(0.62, 0.04, -0.15);
   mechanicsGroup.add(spoolR);
+
+  // Dark typebasket floor so the tighter window has a finished well, not a see-through hole
+  const wellFloor = new THREE.Mesh(
+    new THREE.BoxGeometry(1.28, 0.02, 0.84),
+    materials.keyboardBed
+  );
+  wellFloor.position.set(0, 0.23, -0.74);
+  wellFloor.receiveShadow = true;
+  rootGroup.add(wellFloor);
 
   rootGroup.add(mechanicsGroup);
 
@@ -416,13 +408,6 @@ export function createTypewriterModel(): TypewriterModelController {
     triggerReturnLever: () => {
       isLeverMoving = true;
       leverProgress = 0;
-    },
-
-    updateBadgeText: (text: string) => {
-      currentBadgeText = text;
-      badgeTexture = createBadgeTexture(text);
-      badgeMaterial.map = badgeTexture;
-      badgeMaterial.needsUpdate = true;
     },
 
     update: (delta: number) => {

@@ -5,8 +5,7 @@ import { TypewriterModelController } from './three/typewriterModel';
 import { ALL_KEYS } from './data/keyboardLayout';
 
 export default function App() {
-  // Initial state matching the user's reference photograph:
-  // "programming languages" on line 1, "Special|" on line 2, and "STUDIO -- VIBE CODING 1.0" on badge
+  // Initial typed text on the paper sheet
   const [lines, setLines] = useState<string[]>([
     'programming languages',
     'Special',
@@ -176,7 +175,6 @@ export default function App() {
         currentCol={currentCol}
         maxCols={maxCols}
         soundEnabled={true}
-        badgeText="STUDIO -- VIBE CODING 1.0"
         onKeyClick={handleTypeCharacter}
         onReturnLeverClick={handleReturnLeverClick}
         onInteraction={triggerInteraction}
