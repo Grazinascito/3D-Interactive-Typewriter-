@@ -1,0 +1,6 @@
+{
+  "name": "Olivetti Lettera 32 3D",
+  "description": "An interactive 3D recreation of the iconic Olivetti Lettera 32 mechanical typewriter with realistic molded shell, tactile typing, carriage advance, and mechanical sound.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
